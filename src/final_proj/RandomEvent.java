@@ -4,34 +4,38 @@ public class RandomEvent {
     private String eventName = "";
 	private String eventDescription = "";
 	// private int timeElapsed = 0;
-	private int credits = 0;
-	private int power = 0;
-	private int oxygen = 0;
-	private int rations = 0;
-    private static int numberOfStats = 4;
-    private boolean isEvent = false;
+	private int creditsChange = 0;
+	private int powerChange = 0;
+	private int oxygenChange = 0;
+	private int rationsChange = 0;
+    // private static int numberOfStats = 4;
 
     public RandomEvent(String eventName, String eventDescription, int credits, int oxygen, int power, int rations){
         this.eventName = eventName;
         this.eventDescription = eventDescription;
         // this.timeElapsed = timeElapsed;
-        this.credits = credits;
-        this.oxygen = oxygen;
-        this.power = power;
-        this.rations = rations;
+        this.creditsChange = credits;
+        this.oxygenChange = oxygen;
+        this.powerChange = power;
+        this.rationsChange = rations;
     }
 
-    public boolean getIsEvent() {
-        return isEvent;
+    public String getEventName() {
+        return eventName;
     }
-
-    // returns this event as is, then parse the stats in the updater
-    public RandomEvent rollEvent(){
-        System.out.println(eventName);
-        System.out.println(eventDescription);
-
-        System.out.println("\nPress ENTER to continue.");
-
-        return this;
+    public String getEventDescription() {
+        return eventDescription;
+    }
+    public int getCreditsChange() {
+        return creditsChange;
+    }
+    public int getOxygenChange() {
+        return oxygenChange;
+    }
+    public int getPowerChange() {
+        return powerChange;
+    }
+    public int getRationsChange() {
+        return rationsChange;
     }
 }

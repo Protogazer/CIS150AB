@@ -1,5 +1,6 @@
 package final_proj;
 
+import java.util.Random;
 import java.util.Scanner;
 
 public class MainGame {
@@ -15,15 +16,29 @@ public class MainGame {
         // TODO include calendar system?
         // TODO make class for user inputs that encapsulates all methods?
         Scanner input = new Scanner(System.in);
+
+        EventManager events = new EventManager();
+        RandomEvent currentEvent;
+        boolean isEvent = false;
+        Random rng = new Random();
+        int eventRoll = -1;
+        int eventCounter = -1;
+
+        // TODO create an array of travel shops for the trip in miles, relative to the remaining miles of the trip
+        // empty array here, then fill it when deciding game length
+        int pitStopsArray[];
+        int stopsCounter = 0;
+
+        PlayerShip player;
         String playerName = "";
         String shipName = "";
         String destinaiton = "";
-        PlayerShip player;
         int timeElapsed = -1;
 
         int choiceNumber = -1;
         int numberOfOptions = -1;
-        int distance = -1;
+        int distanceRemaining = -1;
+        int distanceTraveled = -1;
 
         /* 
          * Creates a separate thread for listening to keyboard inputs while the world is updating
@@ -56,35 +71,41 @@ public class MainGame {
 
         switch (choiceNumber) {
             case 1:
-                distance = 75000000;
+                distanceRemaining = 75000000;
                 destinaiton = "Interplanetary Base 8675-B";
+                pitStopsArray = new int[] {47738652, 29477857, 11566785};
                 break;
             case 2:
-                distance = 140000000;
+                distanceRemaining = 140000000;
                 destinaiton = "Mars";
+                pitStopsArray = new int[] {133418333, 78598721, 22680764, 9563300};
                 break;
             case 3:
-                distance = 390000000;
+                distanceRemaining = 390000000;
                 destinaiton = "Ganymede";
+                pitStopsArray = new int[] {372019056,248304940,174074346,81567408,200763010};
                 break;
             case 4:
-                distance = 746000000;
+                distanceRemaining = 746000000;
                 destinaiton = "Titan";
+                pitStopsArray = new int[] {716980315,601475672, 341317987, 281072086, 98476766, 38683111, 17568813, 4982812};
                 break;
             default:
             // default to Mars
-                distance = 140000000;
+                distanceRemaining = 140000000;
                 destinaiton = "Mars";
+                pitStopsArray = new int[] {133418333, 78598721, 22680764, 9563300};
                 break;
         }
 
-        player = new PlayerShip(playerName, shipName, distance);
+        player = new PlayerShip(playerName, shipName, distanceRemaining);
 
         // PlayerShip player = new PlayerShip(playerName, shipName, milesToDestinaiton);
         clearScreen();
+        System.out.println("Distance to next port: " + (distanceRemaining - pitStopsArray[0]));
 
         // START GREETING
-        System.out.println("Welcome captain " + playerName +"! You've finally gone and done it, you've bought your own starship named " + shipName + ". You've charted a course for " + destinaiton + " with a distance of " + distance + " miles.\nBuying the ship has left you with only 1000 credits to your name and you haven't even bought your supplies yet! You head to Bright Side -the largest pitstop this side of the moon- in order to get supplies.\n");
+        System.out.println("Welcome captain " + playerName +"! You've finally gone and done it, you've bought your own starship named " + shipName + ". You've charted a course for " + destinaiton + " with a distance of " + distanceRemaining + " miles.\nBuying the ship has left you with only 1000 credits to your name and you haven't even bought your supplies yet! You head to Bright Side -the largest pitstop this side of the moon- in order to get supplies.\n");
 
         advanceText(input);
 
@@ -102,64 +123,47 @@ public class MainGame {
         powerChargePrice = 50;
         powerCellPrice = 35;
         rationsPrice = 3;
-        shieldUpgradePrice = 650;
+        shieldUpgradePrice = 650 * player.canBuyShield();
         oxygenPrice = (int) Math.round(Math.abs(player.getOxygen() - 100) * 2);
         powerChargePrice = (int) Math.round(Math.abs(player.getPower() - player.getPowerCapacity()) * 1.8); // calculated based on delta between current capacity and max
 
-        // PRINT ITEM LIST
-        System.out.println("(1) Oxygen refills - " + oxygenPrice + " Credits to completely fill\n(2) Power Cells (increase range) - " + powerCellPrice + " Credits each\n(3) Rations - " + rationsPrice + " Credits per pound\n(4) Upgraded Shields - " + shieldUpgradePrice + " Credits\n(5) Charge power cells - "+ powerChargePrice +" Credits to fully charge\n(6) Leave the shop");
-        numberOfOptions = 6;
-        choiceNumber = getChoiceNumber(input, numberOfOptions);
-
-        while (choiceNumber != 6) {
-            clearScreen();
-            switch (choiceNumber) {
-                case 1:
-                    System.out.print("Do you want to refill your O2 tanks? You've got " + player.getOxygen() + "% left in the tank. It'll cost ya "+ oxygenPrice +"\n(Enter YES or NO): ");
-                    player.buyItems("oxygen", getYesNo(input), oxygenPrice);
-                    break;
-                case 2:
-                    System.out.print("How many power cells do ya want? - " + powerCellPrice + " Credits per cell\n(Type number and hit ENTER): ");
-                    player.buyItems("power", input.nextInt(), powerCellPrice);
-                    break;
-                case 3:
-                    System.out.print("How many pounds of food do ya want? " + rationsPrice + " Credits per pound\n(Typer number and hit ENTER): ");
-                    player.buyItems("rations", input.nextInt(), rationsPrice);
-                    break;
-                case 4:
-                    System.out.print("So ya wanna upgrade that weak shield huh? That'll be "+ shieldUpgradePrice +" (Enter YES or NO): ");
-                    player.buyItems("shields", getYesNo(input), shieldUpgradePrice);
-                    break;
-                case 5:
-                    System.out.print("I can charge those batteries up for ya if you want. You've currently got a charge of " + player.getBatteryPercentage() + "%.\nThat'll cost ya " + powerChargePrice + " Credits. What do ya say?\n(Enter YES or NO): ");
-                    player.buyItems("charge", getYesNo(input), powerChargePrice);
-                break;
-                case 6:
-                    System.out.println("Alright, see ya around kid!");
-                default:
-                    System.out.println("We don't got that here.");
-                    break;
-            }
-            System.out.println(player.getAllStats());
-            System.out.println("\nAnything else ya need?");
-            
-            // Update variable prices
-            oxygenPrice = (int) Math.round(Math.abs(player.getOxygen() - 100) * 2);
-            powerChargePrice = (int) Math.round(Math.abs(player.getPower() - player.getPowerCapacity()) * 1.8); // calculated based on delta between current capacity and max
-
-            System.out.println("(1) Oxygen refills - " + oxygenPrice + " Credits to completely fill\n(2) Power Cells (increase range) - " + powerCellPrice + " Credits each\n(3) Rations - " + rationsPrice + " Credits per pound\n(4) Upgraded Shields - " + shieldUpgradePrice + " Credits\n(5) Charge power cells - "+ powerChargePrice +" Credits to fully charge\n(6) Leave the shop");
-            choiceNumber = getChoiceNumber(input, numberOfOptions);
-        }
+        startShopDialogue(input, player, oxygenPrice, powerCellPrice, rationsPrice, shieldUpgradePrice, powerChargePrice);
 
         // initialize world variables
         timeElapsed = 0;    // resets timer count
+        distanceTraveled = 0;
+        eventCounter = 0;
         t.start();          // key listener thread
 
 
         // WORLD UPDATER
-        while (distance > 0){
+        while (distanceRemaining > 0){
             clearScreen();
             int warningFlag = 0;
+
+            // make sure not to overflow the buffer
+            if (stopsCounter < pitStopsArray.length) {
+                // check distance compared to pitstop distance, if you've passed it, stop at it and start the dialogue.
+                if (distanceRemaining < pitStopsArray[stopsCounter]) {
+                    System.out.println("You've just landed at a new spaceport. Time to stretch your legs and have a look around!\n");
+                    
+                    // end KeyListener thread
+                    System.out.println("\nPress ENTER to continue.");
+                    while (keyPressed == false) {
+                        // wait until key is pressed
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    startShopDialogue(input, player, oxygenPrice*(stopsCounter + 1), powerCellPrice*(stopsCounter + 1), rationsPrice*(stopsCounter + 1), shieldUpgradePrice*(stopsCounter + 1), powerChargePrice*(stopsCounter + 1));
+                    stopsCounter++;
+
+                    keyPressed = false;
+                    resetKeyListener(userInputListener);
+                }
+            }
 
             // check the flag
             if (keyPressed == true) {
@@ -170,40 +174,66 @@ public class MainGame {
             }
 
             // update every day until destinaiton is reached
-            System.out.println(player.getAllStats() + "\n\nCurrent Speed: " + player.getMilesPerDay()/24 + " MPH");
-            distance -= player.getMilesPerDay();
             warningFlag = player.updateStatus();
+            System.out.println(player.getAllStats() + "\n\nCurrent Speed: " + player.getMilesPerDay()/24 + " MPH");
+            distanceRemaining -= player.getMilesPerDay();
+            distanceTraveled += player.getMilesPerDay();
             timeElapsed++;
-            System.out.println("Miles to " + destinaiton + ": " + distance + " (" + distance/player.getMilesPerDay() +" Days)");
+            System.out.println("Miles to " + destinaiton + ": " + distanceRemaining + " (" + distanceRemaining/player.getMilesPerDay() +" Days)");
             System.out.println("Days in space: " + timeElapsed);
 
-            // TODO Roll event for if statement. Returns positive int if an event occurs
-            // add the return to the warning flag
+            // Roll random number to determine if there will be an event
+            if (timeElapsed > 3 && rng.nextInt(50) >= 43) {
+                eventCounter++;
+                // add the return to the warning flag
+                warningFlag++;
+                isEvent = true;
+            }
 
             // check warning flag and pause update if something needs to be addressed
             if (warningFlag > 0) {
-                while (keyPressed == false) {
-                    // wait until key is pressed
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+
+                if (isEvent) {
+                    currentEvent = events.getRandomEvent(rng.nextInt(events.getNumberOfEvents()));
+                    System.out.println("\nEVENT:\n" + currentEvent.getEventName());
+                    System.out.println("Press ENTER to continue.");
+                    
+                    // end KeyListener thread
+                    while (keyPressed == false) {
+                        // wait until key is pressed
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    clearScreen();
+
+                    // print event and update ship
+                    player.parseEvent(currentEvent);
+
+                    advanceText(input);
+
+                    resetKeyListener(userInputListener);
+
+                    // reset event flag when done
+                    isEvent = false;
+
+                    // start next day (MAY NOT USE THIS REALLY)
+                    continue;
+                } else {
+                    System.out.println("\nWARNING ISSUED - ACKNOWLEDGEMENT REQUIRED\nPress ENTER to continue.");
+                    // end KeyListener thread
+                    while (keyPressed == false) {
+                        // wait until key is pressed
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-                clearScreen();
-
-                // TODO print results of event
-                System.out.println("Okay the event sucked you lost this shit:\n\n-1 Oxygen\n-2 Rations");
-                
-                advanceText(input);
-
-                resetKeyListener(userInputListener);
-
-                // start next day (MAY NOT USE THIS REALLY)
-                continue;
-            } else {
-                System.out.println("\nAll Clear.");
             }
             System.out.println("\nPress ENTER to make operational changes for your ship.");
 
@@ -212,11 +242,8 @@ public class MainGame {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (distance <= 0) {
-                // while loop will exit automatically
-                System.out.println("You made it!");
-            }
         }
+        gameWon(playerName, timeElapsed, player.getPower(), player.getCredits(), player.getRations(), eventCounter, distanceTraveled);
     }
 
     private static void advanceText(Scanner input) {
@@ -272,7 +299,7 @@ public class MainGame {
         switch (menuChoice) {
             case 1:
                 System.out.println("\nYou engine speed is currently set to "+ player.getEngineThrust());
-                System.out.println("What speed would you like to set it to?\n(1) Off (+2 charge/day)\n(2) Low ("+player.getEnginePowerDraw(1)+" charge/day)\n(3) Medium ("+ player.getEnginePowerDraw(2) +" charge/day)\n(4) High ("+ player.getEnginePowerDraw(3)+" charge/day)");
+                System.out.println("What speed would you like to set it to?\n(1) Off (+2 charge/day)\n(2) Low (-"+player.getEnginePowerDraw(1)+" charge/day)\n(3) Medium (-"+ player.getEnginePowerDraw(2) +" charge/day)\n(4) High (-"+ player.getEnginePowerDraw(3)+" charge/day)");
                 choice2 = getChoiceNumber(input, 4);
                 player.setEngineSpeed(choice2 -1); // EngineSpeed is 0 indexed in PlayerShip class
                 clearScreen();
@@ -281,17 +308,19 @@ public class MainGame {
                 menu(input, player);
                 break;
             case 2:
+                // TODO MEALS
                 System.out.println("World");
                 // returns you to the menu until you intentionally exit (option 5)
                 menu(input, player);
                 break;
             case 3:
+                // TODO SHIELD
                 System.out.println("Alex");
                 // returns you to the menu until you intentionally exit (option 5)
                 menu(input, player);
                 break;
             case 4:
-                System.out.println("\nHELP:\n\nThe engine uses power cells in order to run. The it takes much more power to run as speed increases, so it's best only use it when necessary. Your ship has solar power, and can slowly recharge if the engine is left off. Since you are in space, you will retain some forward momentum even when the engines are off.\n\nYour meal plan determines how quickly you will go through your rations. The less you eat however, the more often you may get sick, so keep that in mind.\n\nThe shields are on by default, and protect against small amounts of space debris and other minor damage. However the shield draws power too and can be disabled to help offset battery draining.");
+                System.out.println("\nHELP:\n\nThe engine uses power cells in order to run. The it takes exponentially more power to run as speed increases, so it's best only use it when necessary. Your ship has solar power, and can slowly recharge if the engine is left off. Since you are in space, you will retain some forward momentum even when the engines are off.\n\nYour meal plan determines how quickly you will go through your rations. The less you eat however, the more often you may get sick, so keep that in mind.\n\nThe shields are on by default, and protect against small amounts of space debris and other minor damage. However the shield draws power too and can be disabled to help offset battery draining.");
                 advanceText(input);
                 clearScreen();
 
@@ -306,6 +335,69 @@ public class MainGame {
             default:
                 break;
         }
+        return;
+    }
+
+    private static void printShopPrices(int oxygenPrice, int powerCellPrice, int rationsPrice, int shieldUpgradePrice, int powerChargePrice) {
+        System.out.println("(1) Oxygen refills - " +oxygenPrice + " Credits to completely fill");
+        System.out.println("(2) Power Cells (increase range) - " + powerCellPrice + " Credits each");
+        System.out.println("(3) Rations - " + rationsPrice + " Credits per pound");
+        System.out.println("(4) Upgraded Shields - " + shieldUpgradePrice + " Credits");
+        System.out.println("(5) Charge power cells - "+ powerChargePrice +" Credits to fully charge");
+        System.out.println("(6) Leave the shop");
+        return;
+    }
+
+    private static void startShopDialogue(Scanner input, PlayerShip player, int oxygenPrice, int powerCellPrice, int rationsPrice, int shieldUpgradePrice, int powerChargePrice){
+        // PRINT ITEM LIST
+        printShopPrices(oxygenPrice, powerCellPrice, rationsPrice, shieldUpgradePrice, powerChargePrice);
+        int numberOfOptions = 6;
+        int choice = getChoiceNumber(input, numberOfOptions);
+
+        while (choice != 6) {
+            clearScreen();
+            switch (choice) {
+                case 1:
+                    System.out.print("Do you want to refill your O2 tanks? You've got " + player.getOxygen() + "% left in the tank. It'll cost ya "+ oxygenPrice +"\n(Enter YES or NO): ");
+                    player.buyItems("oxygen", getYesNo(input), oxygenPrice);
+                    break;
+                case 2:
+                    System.out.print("How many power cells do ya want? - " + powerCellPrice + " Credits per cell (HINT: you can sell your own stock using negative numbers)\n(Type number and hit ENTER): ");
+                    player.buyItems("power", input.nextInt(), powerCellPrice);
+                    break;
+                case 3:
+                    System.out.print("How many pounds of food do ya want? " + rationsPrice + " Credits per pound (HINT: you can sell your own stock using negative numbers)\n(Typer number and hit ENTER): ");
+                    player.buyItems("rations", input.nextInt(), rationsPrice);
+                    break;
+                case 4:
+                    if (player.canBuyShield() == 0) {
+                        System.out.println("You already upgraded your shields, remember?\n");
+                        break;
+                    }
+                    System.out.print("So ya wanna upgrade that weak shield huh? That'll be "+ shieldUpgradePrice +" Credits. Remember, there are no refunds on this one!\n(Enter YES or NO): ");
+                    player.buyItems("shields", getYesNo(input), shieldUpgradePrice);
+                    break;
+                case 5:
+                    System.out.print("I can charge those batteries up for ya if you want. You've currently got a charge of " + player.getBatteryPercentage() + "%.\nThat'll cost ya " + powerChargePrice + " Credits. What do ya say?\n(Enter YES or NO): ");
+                    player.buyItems("charge", getYesNo(input), powerChargePrice);
+                    break;
+                case 6:
+                    System.out.println("Alright, see ya around kid!");
+                    return;
+                default:
+                    System.out.println("We don't got that here.");
+                    break;
+            }
+            System.out.println(player.getAllStats());
+            System.out.println("\nAnything else ya need?");
+            
+            // Update variable prices
+            oxygenPrice = (int) Math.round(Math.abs(player.getOxygen() - 100) * 2);
+            powerChargePrice = (int) Math.round(Math.abs(player.getPower() - player.getPowerCapacity()) * 1.8); // calculated based on delta between current capacity and max
+            shieldUpgradePrice = 650 * player.canBuyShield();
+            printShopPrices(oxygenPrice, powerCellPrice, rationsPrice, shieldUpgradePrice, powerChargePrice);
+            choice = getChoiceNumber(input, numberOfOptions);
+        }
     }
 
     private static void resetKeyListener (KeyListener userInputListener){
@@ -315,5 +407,10 @@ public class MainGame {
             Thread t2 = new Thread(userInputListener);
             t2.start();
             return;
+    }
+
+    private static void gameWon(String name, int timeElapsed, int power, int credits, int rations, int eventsCount, int distanceTraveled){
+        int score = (int) Math.round((timeElapsed*10) + (credits*4 )+ (power *12) +  (rations*5) + (eventsCount*1000) + (distanceTraveled*0.8));
+        System.out.println("You did it! you beat the game!\n FINAL SCORE: " + score + " points.\nCongradulations captain " + name + "!");
     }
 }

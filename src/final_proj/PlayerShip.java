@@ -1,5 +1,7 @@
 package final_proj;
 
+import java.util.Random;
+
 public class PlayerShip {
     private String playerName = "";
     private String shipName = "";
@@ -14,10 +16,10 @@ public class PlayerShip {
 
     // factors that determine stat usage. USAGE IS POSITIVE, AND IS SUBTRACTED FROM TOTAL UPON UPDATE
     private boolean shieldsOn = false;
-    private boolean shieldsUpgrade = false;
-    private int engineThrust = 0;   // 0-4 (off, low, medium, high, turbo)
-    private int milesPerDay = 0;    // set by engine thrust
-    private int powerUsage = 0;     // determined by shield status and entine thrust
+    private boolean canBuyShield = true;    // only used when setting shield price, starts true
+    private int engineThrust = 0;           // 0-4 (off, low, medium, high, turbo)
+    private int milesPerDay = 0;            // set by engine thrust
+    private int powerUsage = 0;             // determined by shield status and entine thrust
     private int oxygenConsumption = 1;
     private int rationUsage = 2;
     private int daysWithoutFood = 0;
@@ -64,7 +66,7 @@ public class PlayerShip {
         return speed;
     }
     public int getEnginePowerDraw(int engineSpeedLevel) {
-        return Math.round(engineSpeedLevel * (float) 2.3);
+        return Math.round(engineSpeedLevel * engineSpeedLevel);
     }
     public int getMilesPerDay() {
         return milesPerDay;
@@ -93,7 +95,10 @@ public class PlayerShip {
     // lists current levels for oxygen, power, credits and rations
     public String getAllStats() {
         return ("STATS FOR " + shipName.toUpperCase() + ":\nOxygen remaining: " + oxygen + "%\nPower remaining: "
-                + getBatteryPercentage() + "% ("+ power +"/"+ powerCapacity +" cells used)\nRations remaining: " + rations + " pounds\nCredits remaining: " + credits);
+                + getBatteryPercentage() + "% ("+ power +"/"+ powerCapacity +" cells charged)\nRations remaining: " + rations + " pounds\nCredits remaining: " + credits);
+    }
+    public int canBuyShield(){
+        return canBuyShield == true ? 1 : 0; // returns 1 if yes, 0 if no
     }
 
     // SETTERS
@@ -124,10 +129,84 @@ public class PlayerShip {
             System.out.println("Unexpected option encountered, speed remains unchanged.");
         }
     }
+    // used to update the stats after an event
+    public void updateCreditsStat(int creditsChange) {
+        if (creditsChange > 0) {
+            this.credits += creditsChange;
+            System.out.println("+" + creditsChange + " Credits");
+        } else if (creditsChange < 0) {
+            if (this.credits+creditsChange <= 0) {
+                System.out.println("Your wallet was bled dry. They took every last Credit you had.");
+                this.credits = 0;
+            } else {
+                this.credits += creditsChange;
+            }
+            System.out.println(creditsChange + " Credits");
+        }
+    }
+    public void updateOxygenStat(int oxygenChange) {
+        if (oxygenChange > 0) {
+            System.out.println("+" + oxygenChange + " Oxygen");
+            this.oxygen += oxygenChange;
+        } else if (oxygenChange < 0) {
+            if (this.oxygen+oxygenChange <= 0) {
+                System.out.println("That's nearly all of your air! You quickly isolate all the oxygen to the living quarters to eek out a few extra breaths worth.");
+                this.oxygen = 5;
+            } else {
+                this.oxygen += oxygenChange;
+            }
+            System.out.println(oxygenChange + " Oxygen");
+        }
+    }
+    public void updatePowerStat(int powerChange) {
+        if (powerChange > 0) {
+            System.out.println("+" + powerChange + " Power");
+            this.power += powerChange;
+        } else if (powerChange < 0) {
+            if (this.power+powerChange <= 0){
+                this.power = 0;
+                setEngineSpeed(0);
+                System.out.println("Your ship has run out of power! The engines have shut off in hopes of recharging with the solar panels.");
+            } else {
+                this.power += powerChange;
+            }
+            System.out.println(powerChange + " Power");
+        }
+    }
+    public void updateRationsStat(int rationsChange) {
+        if (rationsChange > 0) {
+            System.out.println("+" + rationsChange + " Rations");
+            this.rations =+ rationsChange;
+        } else if (rationsChange < 0) {
+            if (this.rations+rationsChange <= 0) {
+                System.out.println("That was your very last morsel of food. You'll soon starve if you don't find something to eat!");
+                if (daysWithoutFood == 0) {
+                    daysWithoutFood = 1;
+                }
+            } else {
+                this.rations += rationsChange;
+            }
+            System.out.println(rationsChange + " Rations");
+        }
+    }
+
 
     public void setOxygenConsumption(int extraO2Usage) {
         // TODO change this when damaged or more crew members
         this.oxygenConsumption = 1 + extraO2Usage;
+    }
+
+    public void setRationUsage(int dietNumber) {
+        switch (dietNumber) {
+            case 1:
+            rationUsage = 1;
+
+                break;
+        
+            default:
+                break;
+        }
+        this.rationUsage = rationUsage;
     }
 
     public void toggleShields() {
@@ -158,7 +237,7 @@ public class PlayerShip {
         String shopResponse = "";
 
         if ((qty * unitPrice) > this.credits) {
-            System.out.println("Who are you trying to fool? You don't have that kind of money!\n");
+            System.out.println("\nWho are you trying to fool? You don't have that kind of money!\n");
             return -1;
         }
 
@@ -180,20 +259,20 @@ public class PlayerShip {
             }
         } else if (item.equals("shields")) {
             if (qty == 1) {
-                if (shieldsUpgrade == true) {
-                    System.out.println("You've already upgraded your shields. They're already top of the line.\n");
+                if (canBuyShield == false) {
+                    System.out.println("\nYou've already upgraded your shields. They're already top of the line.\n");
                     return 0;
                 }
-                shieldsUpgrade = true;
+                canBuyShield = false;
                 shopResponse = "I activated the \"Rocks and Raiders\" package on your shields. ";
             } else {
                 shopResponse = "Hope you're a good pilot! ";
                 return 0;
             }
         } else if (qty == 0) {
-            System.out.println("Okay, no problem. Your money's probably no good anyway...\n");
+            System.out.println("\nOkay, no problem. Your money's probably no good anyway...\n");
             return 1;
-        } else {
+        } else if (qty > 0) {
             switch (item) {
                 case "power":
                     powerCapacity += qty;
@@ -207,54 +286,115 @@ public class PlayerShip {
                     System.err.println("Unknown shop item! Aborting purchase");
                     return -1;
             }
+        } else {
+            // SELLING ITEMS
+            switch (item) {
+                case "power":
+                    if (Math.abs(qty) <= powerCapacity) {
+                        powerCapacity += qty;
+                        // if selling the batteries makes the total charge greater than the capacity, fix it
+                        if (power > powerCapacity) {
+                            power = powerCapacity;
+                        }
+                        shopResponse = (Math.abs(qty*unitPrice) + " Credits for those power cells of yours. ");
+                    } else {
+                        System.out.println("\nAre you kidding me?? You ain't got that many batteries! No deal!\n");
+                        return -1;
+                    }
+                    break;
+                case "rations":
+                    if (Math.abs(qty) <= rations) {
+                        rations += qty;
+                        shopResponse = (Math.abs(qty*unitPrice) + " Credits for your rations. Hope you don't starve out there. ");
+                    } else {
+                        System.out.println("\nDo you think I'm stupid?? I know how to count, and you ain't got that much food on you!\n");
+                        return -1;
+                    }
+                    break;
+                default:
+                    System.err.println("Unknown shop item! Aborting purchase");
+                    return -1;
+            }
         }
 
         this.credits -= (qty * unitPrice);
-        System.out.println("\nHere ya go, " + shopResponse + "Thanks for your busniness!\n");
+        System.out.println("\nHere ya go, " + shopResponse + "Thanks for your business!\n");
         // System.out.println("Credits remaining:" + credits + "\n");
         return 0;
+    }
+
+    // parse the stats from the currently running event
+    public void parseEvent(RandomEvent event) {
+        int creditsChange = event.getCreditsChange();
+        int oxygenChange = event.getOxygenChange();
+        int powerChange = event.getPowerChange();
+        int rationsChange = event.getRationsChange();
+
+        System.out.println(event.getEventName() + "\n");
+        System.out.println(event.getEventDescription() + "\n\nRESULTS");
+
+        updateCreditsStat(creditsChange);
+        updateOxygenStat(oxygenChange);
+        updatePowerStat(powerChange);
+        updateRationsStat(rationsChange);
     }
 
     // updates status for power, oxygen and rations when called
     public int updateStatus() {
         int warningCount = 0;
 
-        if (power > 0 || power < powerCapacity) {
-            power = Math.clamp((power - powerUsage), 0, powerCapacity);
+        Random randomVal = new Random();
 
-            // WARN IF LOW
-            if (power > 0 && ((float)power / powerCapacity) <= 0.1) {
-                System.out.println("\nWARNING: POWER REMAINING IS BELOW 10. ADJUST POWER INTAKE IMMEDIATELY\n");
-            }
-
-            // check for 0
-            if (power == 0) { 
-                // TODO keep subtracting oxygen and rations
-                System.out.print("\033\143");
-                System.out.println("\nYou are out of power! You are left drifting through space.\nYour thrusters have been turned off in hopes of recharging the batteries.\nAll you can do now is cross your fingers and hope you hold out until you make it to a base or help arrives...\n");
-                setEngineSpeed(0); // set engines to off
-
-                warningCount++;
-
-                // turn shields off
-                shieldsOn = false;
+        // if the diet is poor roll for ailment
+        if (rationUsage < 2) {
+            if (randomVal.nextInt(10) > 7) {
+                
             }
         }
-        if (oxygen > 0 || oxygen < 100) {
-            oxygen = Math.clamp((oxygen - oxygenConsumption), 0, 100);
-            // check for 0
-            if (oxygen == 0) { 
-                System.out.print("\033\143");
-                System.out.println("Well, that's no good. You're out of oxygen!\n\nIn your last moments you remember something- a popular traveler's guide. It stated that \"if you hold a lungful of air you can survive in the total vacuum of space for about thirty seconds. However, it does go on to say that what with space being the mindboggling size it is the chances of getting picked up by another ship within those thirty seconds are two to the power of two hundred and seventy-six thousand seven hundred and nine to one against\". You did not beat those odds.\n\nGAME OVER");
-                System.exit(0);
-            }
+
+        // clamp power value
+        power = Math.clamp((power - powerUsage), 0, powerCapacity);
+        // WARN IF LOW
+        if (power > 0 && ((float)power / powerCapacity) <= 0.1) {
+            System.out.println("\nWARNING: POWER REMAINING IS BELOW 10. ADJUST POWER INTAKE IMMEDIATELY\n");
         }
-        if (rations > 0) {
+        // check for 0
+        if (power == 0) { 
+            // TODO keep subtracting oxygen and rations
+            System.out.print("\033\143");
+            System.out.println("\nYou are out of power! You are left drifting through space.\nYour thrusters have been turned off in hopes of recharging the batteries.\nAll you can do now is cross your fingers and hope you hold out until you make it to a base or help arrives...\n");
+            setEngineSpeed(0); // set engines to off
+
+            warningCount++;
+
+            // turn shields off
+            shieldsOn = false;
+        }
+
+        // clamp oxygen value
+        oxygen = Math.clamp((oxygen - oxygenConsumption), 0, 100);
+        // check for 0
+        if (oxygen == 10) {
+            System.out.println("WARNING: OXYGEN REMAINING IS BELOW 10%. PLEASE SEEK A RESUPPLY DEPOT IMMEDIATELY\n");
+            warningCount++;
+        }
+        if (oxygen < 10) {
+            System.out.println("WARNING: OXYGEN REMAINING IS BELOW 10%. PLEASE SEEK A RESUPPLY DEPOT IMMEDIATELY\n");
+        }
+        if (oxygen == 0) { 
+            System.out.print("\033\143");
+            // Hitchhikers Guide quote
+            System.out.println("Well, that's no good. You're out of oxygen!\n\nIn your last moments you remember something- a popular traveler's guide. It stated that \"if you hold a lungful of air you can survive in the total vacuum of space for about thirty seconds. However, it does go on to say that what with space being the mindboggling size it is the chances of getting picked up by another ship within those thirty seconds are two to the power of two hundred and seventy-six thousand seven hundred and nine to one against\". You did not beat those odds.\n\nGAME OVER\n\n");
+            System.exit(0);
+        }
+
+        // clamp rations value
+        if (rations >= 0) {
             rations = Math.clamp((rations - rationUsage), 0, 99999);
             if (rations == 0) {
                 // TODO allow for 14 more days to pass, increase illness
                 rations = 0;
-                System.out.println("Your stomache is in pain, and you're getting weak. You're not sure how long you can really survive without food!");
+                System.out.println("Your stomach is in pain, and you're getting weak. You're not sure how long you can really survive without food!\n");
                 if (daysWithoutFood == 0) {
                     warningCount++;
                 }
