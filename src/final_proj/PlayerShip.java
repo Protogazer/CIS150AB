@@ -36,14 +36,44 @@ public class PlayerShip {
     }
 
     // GETTERS
-    public String getPlayerName() {
-        return playerName;
+    public float getBatteryPercentage() {
+        return ((float) power/powerCapacity * 100);
     }
     public int getCredits() {
         return credits;
     }
+    public String getEngineThrust() {
+        String speed;
+        switch (engineThrust) {
+            case 0:
+                speed = "Off";
+                break;
+            case 1:
+                speed = "Low";
+                break;
+            case 2:
+                speed = "Medium";
+                break;
+            case 3:
+                speed = "High";
+                break;
+            default:
+                speed = "ERROR";
+                break;
+        }
+        return speed;
+    }
+    public int getEnginePowerDraw(int engineSpeedLevel) {
+        return Math.round(engineSpeedLevel * (float) 2.3);
+    }
+    public int getMilesPerDay() {
+        return milesPerDay;
+    }
     public int getOxygen() {
         return oxygen;
+    }
+    public String getPlayerName() {
+        return playerName;
     }
     public int getPower() {
         return power;
@@ -51,20 +81,14 @@ public class PlayerShip {
     public int getPowerCapacity() {
         return powerCapacity;
     }
-    public int getRations() {
-        return rations;
-    }
     public int getPowerUsage() {
         return powerUsage;
     }
-    public int getMilesPerDay() {
-        return milesPerDay;
+    public int getRations() {
+        return rations;
     }
     public String getShipName() {
         return shipName;
-    }
-    public float getBatteryPercentage() {
-        return ((float) power/powerCapacity * 100);
     }
     // lists current levels for oxygen, power, credits and rations
     public String getAllStats() {
@@ -73,8 +97,6 @@ public class PlayerShip {
     }
 
     // SETTERS
-
-    // TODO ADD ENGINE OFF SPEED
     public void setEngineSpeed(int speed) {
         if (speed >= 0 && speed <= 4) {
             engineThrust = speed;
@@ -110,7 +132,6 @@ public class PlayerShip {
 
     public void toggleShields() {
         shieldsOn = (shieldsOn == true) ? false : true;
-        System.out.println("Are shields on? " + shieldsOn);
     }
 
     // sets power usage based on if shields are active,
@@ -119,7 +140,7 @@ public class PlayerShip {
         int defaultPowerDraw = 0;
 
         if (engineThrust == 0) {
-            // Engine is off, slowly recharge from solar (2%) 
+            // Engine is off, slowly recharge from solar (2 cells per day) 
             // TODO ADD SOLAR UPGRADE;
             defaultPowerDraw -= 2;
         }
@@ -128,7 +149,7 @@ public class PlayerShip {
             defaultPowerDraw++;
         }
         // add engine power draw (0*2 is still 0)
-        defaultPowerDraw += engineThrust * 2;
+        defaultPowerDraw += getEnginePowerDraw(engineThrust);
         this.powerUsage = defaultPowerDraw;
     }
 
@@ -196,19 +217,27 @@ public class PlayerShip {
 
     // updates status for power, oxygen and rations when called
     public int updateStatus() {
+        int warningCount = 0;
+
         if (power > 0 || power < powerCapacity) {
-            power = Math.clamp((power - powerCapacity), 0, powerCapacity);
+            power = Math.clamp((power - powerUsage), 0, powerCapacity);
 
             // WARN IF LOW
             if (power > 0 && ((float)power / powerCapacity) <= 0.1) {
-                System.out.println("WARNING: POWER REMAINING IS BELOW 10. ADJUST POWER INTAKE IMMEDIATELY");
+                System.out.println("\nWARNING: POWER REMAINING IS BELOW 10. ADJUST POWER INTAKE IMMEDIATELY\n");
             }
 
             // check for 0
             if (power == 0) { 
                 // TODO keep subtracting oxygen and rations
-                System.out.println("You are out of power! You are left drifting through space. All you can do now is cross your fingers and hope you hold out until help arrives...");
+                System.out.print("\033\143");
+                System.out.println("\nYou are out of power! You are left drifting through space.\nYour thrusters have been turned off in hopes of recharging the batteries.\nAll you can do now is cross your fingers and hope you hold out until you make it to a base or help arrives...\n");
                 setEngineSpeed(0); // set engines to off
+
+                warningCount++;
+
+                // turn shields off
+                shieldsOn = false;
             }
         }
         if (oxygen > 0 || oxygen < 100) {
@@ -226,6 +255,9 @@ public class PlayerShip {
                 // TODO allow for 14 more days to pass, increase illness
                 rations = 0;
                 System.out.println("Your stomache is in pain, and you're getting weak. You're not sure how long you can really survive without food!");
+                if (daysWithoutFood == 0) {
+                    warningCount++;
+                }
                 daysWithoutFood++;
 
                 // TODO maybe randomize this between 14-31 the first time rations goes to 0 ?
@@ -236,6 +268,6 @@ public class PlayerShip {
                 }
             }
         }
-        return 0;
+        return warningCount;
     }
 }

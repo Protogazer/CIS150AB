@@ -1,3 +1,23 @@
+TODO LOOK INTO IOSTREAM LISTENER FOR JAVA
+maybe the "hold the enter button to stop" ideas would still work
+where it polls the keyboard in the updater, and if it's currently being pressed, pause the updater
+HOW DO I DEAL WITH HAVING A KEYBOARD LISTENER THAT DOESN'T BLOCK ALL EXECUTION
+
+WHAT SHOULD HAPPEN:
+game starts, world ticks, rolls for event, isEvent, pause world update, show screen until keyboard is pressed, continue
+
+maybe I don't need to stop the keyboard process, maybe the event listens for a the same flag as the world update,
+then the code for the event runs, before exiting, it resets the world update flag so it doesn't try to return
+
+how do i deal with other shops or user input in that scenario?
+
+it's like a need a constant life feed to you keyboard, then whatever it gets passed is parsed
+
+maybe im doing this all wrong. lets think of alternatives to the current control system...
+
+
+
+
 Ideas: the story of the protomen? maybe not
 
 PHone Dialer - dial a number, if it exists in the array, return it's greeting
