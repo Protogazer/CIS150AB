@@ -1,5 +1,16 @@
 package final_proj;
 
+/*
+ * Alex Johnson
+ * Final Project PlayerShip class
+ * 
+ * A class to manage the player's ship and all changes to it's stats that occur during gameplay
+ * 
+ * The player/ship are created as a separate PlayerShip object, storing all information
+ * about the health and stats of the player. Some elements were commented out since they
+ * were not implemented in time.
+ */
+
 import java.util.Random;
 
 public class PlayerShip {
@@ -7,33 +18,38 @@ public class PlayerShip {
     private String shipName = "";
 
     // stats the user can see and effect
-    private int credits = 0;    // whatever
-    private int oxygen = 0;     // percentage
-    private int power = 0;      // percentage
-    private int powerCapacity = 0;   // power cells
-    private int rations = 0;    // pounds
+    private int credits = 0;        // whatever
+    private int oxygen = 0;         // percentage
+    private int power = 0;          // percentage
+    private int powerCapacity = 0;  // power cells
+    private int rations = 0;        // pounds
     // private String[] crewMembers = {}; maybe add this, don't know what for yet
+
 
     // factors that determine stat usage. USAGE IS POSITIVE, AND IS SUBTRACTED FROM TOTAL UPON UPDATE
     private boolean shieldsOn = false;
     private boolean canBuyShield = true;    // only used when setting shield price, starts true
+    
+    private String engineSpeed = "Off";
+    private String mealPlan = "Regular";
+
     private int engineThrust = 0;           // 0-4 (off, low, medium, high, turbo)
     private int milesPerDay = 0;            // set by engine thrust
     private int powerUsage = 0;             // determined by shield status and entine thrust
     private int oxygenConsumption = 1;
-    private int rationUsage = 2;
+    private int rationUsage = 4;
     private int daysWithoutFood = 0;
 
-    // player gets to choose name and how long they have to travel which affects
-    // rations
+
+    // player gets to choose name and how long they have to travel which affects rations
     public PlayerShip(String name, String shipName, int gameLength) {
         this.playerName = name;
         this.shipName = shipName;
-        this.credits = 1000;
-        this.oxygen = 30;
-        this.power = 95;
-        this.powerCapacity = 100;
-        this.rations = (int) Math.round((gameLength * 0.0000008));
+        this.credits = 750;
+        this.oxygen = 100;
+        this.power = 150;
+        this.powerCapacity = 150;
+        this.rations = (int) Math.round((gameLength * 0.0000009));
         setEngineSpeed(1);
     }
 
@@ -44,29 +60,14 @@ public class PlayerShip {
     public int getCredits() {
         return credits;
     }
-    public String getEngineThrust() {
-        String speed;
-        switch (engineThrust) {
-            case 0:
-                speed = "Off";
-                break;
-            case 1:
-                speed = "Low";
-                break;
-            case 2:
-                speed = "Medium";
-                break;
-            case 3:
-                speed = "High";
-                break;
-            default:
-                speed = "ERROR";
-                break;
-        }
-        return speed;
+    public String getEngineSpeed() {
+        return engineSpeed;
     }
-    public int getEnginePowerDraw(int engineSpeedLevel) {
-        return Math.round(engineSpeedLevel * engineSpeedLevel);
+    public int calcEngingPowerDraw(int engineSpeedLevel) {
+        return Math.round((engineSpeedLevel + 1) * engineSpeedLevel);
+    }
+    public String getMealPlan() {
+        return mealPlan;
     }
     public int getMilesPerDay() {
         return milesPerDay;
@@ -109,18 +110,24 @@ public class PlayerShip {
             switch (engineThrust) {
                 case 0:
                     this.milesPerDay = 532600;
+                    engineSpeed = "Off";
                     break;
                 case 1:
-                    this.milesPerDay = 2066400;
+                    this.milesPerDay = 1446480;
+                    engineSpeed = "Low";
                     break;
                 case 2:
-                    this.milesPerDay = 4132800;
+                    this.milesPerDay = 2892960;
+                    engineSpeed = "Medium";
                     break;
                 case 3:
-                    this.milesPerDay = 6200000;
+                    this.milesPerDay = 4340000;
+                    engineSpeed = "High";
                     break;
                 case 4:
-                    this.milesPerDay = 9820000;
+                    this.milesPerDay = 6874000;
+                    engineSpeed = "Turbo";
+                    break;
                 default:
                     break;
             }
@@ -176,7 +183,7 @@ public class PlayerShip {
     public void updateRationsStat(int rationsChange) {
         if (rationsChange > 0) {
             System.out.println("+" + rationsChange + " Rations");
-            this.rations =+ rationsChange;
+            this.rations += rationsChange;
         } else if (rationsChange < 0) {
             if (this.rations+rationsChange <= 0) {
                 System.out.println("That was your very last morsel of food. You'll soon starve if you don't find something to eat!");
@@ -190,23 +197,29 @@ public class PlayerShip {
         }
     }
 
+    // public void setOxygenConsumption(int extraO2Usage) {
+    //     // TODO change this when damaged or more crew members
+    //     this.oxygenConsumption = 1 + extraO2Usage;
+    // }
 
-    public void setOxygenConsumption(int extraO2Usage) {
-        // TODO change this when damaged or more crew members
-        this.oxygenConsumption = 1 + extraO2Usage;
-    }
-
-    public void setRationUsage(int dietNumber) {
+    public void setMealPlan(int dietNumber) {
         switch (dietNumber) {
             case 1:
-            rationUsage = 1;
-
+                rationUsage = 0;
+                mealPlan = "Meager";
                 break;
-        
+            case 2:
+                rationUsage = 2;
+                mealPlan = "Lean";
+                break;
+            case 3:
+                rationUsage = 4;
+                mealPlan = "Regular";
+                break;
             default:
+            System.err.println("NUMBER NOT RECOGNIZED FOR RATION CHANGE");
                 break;
         }
-        this.rationUsage = rationUsage;
     }
 
     public void toggleShields() {
@@ -223,12 +236,12 @@ public class PlayerShip {
             // TODO ADD SOLAR UPGRADE;
             defaultPowerDraw -= 2;
         }
-        // add shield power draw
-        if (this.shieldsOn) {
-            defaultPowerDraw++;
-        }
+        // // add shield power draw
+        // if (this.shieldsOn) {
+        //     defaultPowerDraw++;
+        // }
         // add engine power draw (0*2 is still 0)
-        defaultPowerDraw += getEnginePowerDraw(engineThrust);
+        defaultPowerDraw += calcEngingPowerDraw(engineThrust);
         this.powerUsage = defaultPowerDraw;
     }
 
@@ -346,9 +359,10 @@ public class PlayerShip {
         Random randomVal = new Random();
 
         // if the diet is poor roll for ailment
-        if (rationUsage < 2) {
-            if (randomVal.nextInt(10) > 7) {
-                
+        if (rationUsage < 4) {
+            if (randomVal.nextInt(10) > 8){
+                System.out.println("You are too tired to focus properly. You are unable to pilot the ship at a faster speed right now. It's just painful to exist.\n");
+                setEngineSpeed(1);
             }
         }
 
@@ -395,13 +409,17 @@ public class PlayerShip {
                 // TODO allow for 14 more days to pass, increase illness
                 rations = 0;
                 System.out.println("Your stomach is in pain, and you're getting weak. You're not sure how long you can really survive without food!\n");
+                System.out.println("You are too tired to focus properly. You are unable to pilot the ship at a faster speed right now. It's just painful to exist.\n");
+                setEngineSpeed(1);
+                
+                // only set on the first day, no need to annoy the player
                 if (daysWithoutFood == 0) {
                     warningCount++;
                 }
                 daysWithoutFood++;
 
                 // TODO maybe randomize this between 14-31 the first time rations goes to 0 ?
-                if (daysWithoutFood >= 26) {
+                if (daysWithoutFood >= 14) {
                     System.out.print("\033\143");
                     System.out.println("You've held out for as long as you could, but your strength has failed you. You can't think, you can't speak, you can't move from where you lie on "+ shipName +"\'s cold floor.\n\nGAME OVER");
                     System.exit(0);

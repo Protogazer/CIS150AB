@@ -1,5 +1,14 @@
 package final_proj;
 
+/*
+ * Alex Johnson
+ * Final Project RandomEvent class
+ * 
+ * A class used to hold the data of a random event. Includes the name, description and status effects
+ * for a random event. This is used in conjunction with EventManager.java to create an array of
+ * RandomEvents to make it easier to create and roll for a random event at runtime.
+ */
+
 public class RandomEvent {
     private String eventName = "";
 	private String eventDescription = "";
